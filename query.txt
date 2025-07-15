@@ -1,0 +1,160 @@
+-- 1. Users Table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name VARCHAR(100),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    profile_picture TEXT,
+    company_name VARCHAR(100),
+    email_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Email Verification Tokens
+CREATE TABLE email_verification_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL
+);
+
+-- 3. Password Reset Tokens
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL
+);
+
+-- 4. Subscription Plans
+CREATE TABLE plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE,
+    price_usd DECIMAL(10,2),
+    max_predictions_per_month INTEGER,
+    description TEXT
+);
+
+-- 5. Subscriptions
+CREATE TABLE subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    plan_id INTEGER REFERENCES plans(id),
+    status VARCHAR(20) CHECK (status IN ('active', 'inactive', 'cancelled')),
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT
+);
+
+-- 6. Payments
+CREATE TABLE payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    plan_id INTEGER REFERENCES plans(id),
+    amount DECIMAL(10,2),
+    currency VARCHAR(10),
+    status VARCHAR(20),
+    payment_date TIMESTAMP,
+    stripe_payment_intent_id TEXT
+);
+
+-- 7. API Keys
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    api_key TEXT UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. API Usage Logs
+CREATE TABLE api_usage_logs (
+    id SERIAL PRIMARY KEY,
+    api_key_id UUID REFERENCES api_keys(id),
+    endpoint TEXT,
+    used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status_code INTEGER,
+    ip_address TEXT
+);
+
+-- 9. Meeting Inputs
+CREATE TABLE meeting_inputs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    duration_minutes INTEGER,
+    attendees_count INTEGER,
+    agenda_clarity INTEGER,
+    has_action_items BOOLEAN,
+    department_count INTEGER,
+    meeting_cost DECIMAL(10,2),
+    meeting_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Meeting Predictions
+CREATE TABLE meeting_predictions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    meeting_id UUID REFERENCES meeting_inputs(id) ON DELETE CASCADE,
+    is_productive BOOLEAN,
+    confidence_score DECIMAL(5,2),
+    predicted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    model_version TEXT
+);
+
+-- 11. Admin Users
+CREATE TABLE admin_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(150) UNIQUE,
+    password_hash TEXT NOT NULL,
+    is_superadmin BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Contact Messages
+CREATE TABLE contact_messages (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    name VARCHAR(100),
+    email VARCHAR(150),
+    message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- Insert basic subscription plans
+INSERT INTO plans (name, price_usd, max_predictions_per_month, description) VALUES
+('Free', 0.00, 100, 'Basic plan with limited monthly predictions.'),
+('Pro', 29.00, 10000, 'For individuals and startups with higher usage.'),
+('Business', 99.00, 50000, 'Advanced usage for teams and organizations.'),
+('Enterprise', 0.00, NULL, 'Custom plan for large companies, contact sales.');
+
+--Get all predictions with user details
+SELECT u.full_name, u.email, m.duration_minutes, p.is_productive, p.confidence_score
+FROM meeting_predictions p
+JOIN meeting_inputs m ON p.meeting_id = m.id
+JOIN users u ON m.user_id = u.id
+ORDER BY p.predicted_at DESC;
+
+--Monthly api usage per user
+SELECT u.full_name, COUNT(*) AS total_calls, DATE_TRUNC('month', a.used_at) AS month
+FROM api_usage_logs a
+JOIN api_keys k ON a.api_key_id = k.id
+JOIN users u ON k.user_id = u.id
+GROUP BY u.full_name, month
+ORDER BY month DESC, total_calls DESC;
+
+--Active subscription with plan name
+SELECT u.email, p.name AS plan_name, s.status, s.start_date, s.end_date
+FROM subscriptions s
+JOIN users u ON s.user_id = u.id
+JOIN plans p ON s.plan_id = p.id
+WHERE s.status = 'active';
+
+--counts of predictions used this month(per plan)
+SELECT p.name AS plan_name, COUNT(mp.id) AS predictions_this_month
+FROM users u
+JOIN subscriptions s ON u.id = s.user_id
+JOIN plans p ON s.plan_id = p.id
+JOIN meeting_inputs mi ON u.id = mi.user_id
+JOIN meeting_predictions mp ON mp.meeting_id = mi.id
+WHERE mp.predicted_at >= date_trunc('month', CURRENT_DATE)
+GROUP BY p.name;
