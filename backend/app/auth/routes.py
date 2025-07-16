@@ -141,7 +141,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 
         user.email_verified = True
         db.commit()
-        return RedirectResponse("http://localhost:8000/dashboard")
+        return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard")
 
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
