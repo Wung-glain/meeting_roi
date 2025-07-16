@@ -47,7 +47,7 @@ const VerifyEmail = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:8000/auth/send-verification-email", {
+      const res = await fetch("https://meetinroi-api.onrender.com//auth/send-verification-email", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
