@@ -9,6 +9,7 @@ import { Eye, EyeOff, BarChart3 } from "lucide-react";
 import {isValidEmail} from "./SignUp";
 import axios from "axios";
 import {useAuth} from "@/context/AuthContext";
+import  API_BASE_URL from "@/utils/api";
 
 
 const Login = () => {
@@ -31,7 +32,7 @@ const Login = () => {
     }
     
     try {
-      const response = await axios.post('http://localhost:8000/auth/login', formData);
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
 
       const data = response.data;
       console.log(data);

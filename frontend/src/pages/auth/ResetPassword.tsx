@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Eye, EyeOff, BarChart3 } from "lucide-react";
+import API_BASE_URL from "@/utils/api";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +35,7 @@ const ResetPassword = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:8000/auth/reset-password", {
+      const res = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
         token,
         new_password: formData.password,
       });

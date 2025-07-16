@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "react-router-dom";
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import axios from 'axios';
+import API_BASE_URL from "@/utils/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ const ForgotPassword = () => {
     console.log("Password reset requested for:", email);
     setIsSubmitted(true);
     try{
-      const response = await axios.post('http://localhost:8000/auth/request-password-reset', formData);
+      const response = await axios.post(`${API_BASE_URL}/auth/request-password-reset`, formData);
 
       const data = response.data
       console.log(data);

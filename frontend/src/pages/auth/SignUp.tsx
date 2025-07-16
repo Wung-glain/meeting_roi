@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API_BASE_URL from "@/utils/api";
 import {
   FaCheckCircle,
   FaTimesCircle
@@ -83,7 +84,7 @@ const SignUp = () => {
     if (!allPasswordValid) return alert("Password doesn't meet criteria");
 
     try {
-      const response = await axios.post("http://localhost:8000/auth/register", formData);
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
       alert("Registration successful!");
       localStorage.removeItem("full_name");
       localStorage.removeItem("email");

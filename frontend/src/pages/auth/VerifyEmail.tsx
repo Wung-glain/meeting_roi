@@ -11,6 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, BarChart3 } from "lucide-react";
 import { useEffect, useState } from "react";
+import API_BASE_URL from "@/utils/api";
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const VerifyEmail = () => {
     setError("");
 
     try {
-      const res = await fetch("https://meetinroi-api.onrender.com//auth/send-verification-email", {
+      const res = await fetch(`${API_BASE_URL}/auth/send-verification-email`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -70,7 +71,7 @@ const VerifyEmail = () => {
 
   const checkVerified = async () => {
     try {
-      const res = await fetch("http://localhost:8000/auth/me", {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

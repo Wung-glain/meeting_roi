@@ -13,10 +13,10 @@ app = FastAPI(
     description="Predict if a meeting is productive and estimate cost",
     version="1.0.0"
 )
-
+origins = settings.FRONTEND_URL
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],  # Use ["http://localhost:3000"] in production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

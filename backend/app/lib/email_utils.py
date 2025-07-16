@@ -7,8 +7,8 @@ load_dotenv()  # Load variables from .env
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-FRONTEND_VERIFY_URL = "http://localhost:8000/auth/verify?token="  # Your React frontend route
-PASSWORD_RESET_URL = "http://localhost:8080/reset-password?token="
+FRONTEND_VERIFY_URL = f"{settings.FRONTEND_URL}/auth/verify?token="  # Your React frontend route
+PASSWORD_RESET_URL = f"{settings.FRONTEND_URL}/reset-password?token="
 
 def send_verification_email(to_email: str, token: str):
     msg = EmailMessage()

@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     SMTP_USER: str
     SMTP_PASS: str
+    FRONTEND_URL: str
+    BACKEND_URL: str
 
     class Config:
         env_file = ".env"

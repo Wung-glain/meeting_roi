@@ -1,5 +1,6 @@
 // Prediction.tsx
 import React, { useState, useEffect } from "react";
+import API_BASE_URL from "@/utils/api";
 import { Button } from "@/components/ui/button"; // Assuming relative path for Button
 import { Input } from "@/components/ui/input"; // Assuming relative path for Input
 import { Label } from "@/components/ui/label"; // Assuming relative path for Label
@@ -101,7 +102,7 @@ const apiPayload = {
 };
     console.log(apiPayload);
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/predict_one', apiPayload);
+      const response = await axios.post(`${API_BASE_URL}/api/predict_one`, apiPayload);
 
       if (!response) {
         const errorData = await response.data;
