@@ -76,7 +76,7 @@ const IsVerified: React.FC = () => {
         const response = await axios.post(`${API_BASE_URL}/auth/verify`, { token });
 
         if (response.status === 200) {
-  
+        login(user);
         // ✅ Call /auth/me to check latest user status
         const checkVerified = async () => {
           try {

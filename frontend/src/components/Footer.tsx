@@ -27,10 +27,10 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Product</h3>
             <ul className="space-y-2">
-              <li><Link to="/pricing" className="text-gray-400 hover:text-white">Pricing</Link></li>
-              <li><Link to="/docs" className="text-gray-400 hover:text-white">Documentation</Link></li>
-              <li><Link to="/api" className="text-gray-400 hover:text-white">API Access</Link></li>
-              <li><Link to="/bulk" className="text-gray-400 hover:text-white">Bulk Predictions</Link></li>
+              <li><Link to="/pricing" className="text-gray-400 hover:text-white" onClick={() => window.scrollTo(0,0)}>Pricing</Link></li>
+              <li><Link to="/docs" className="text-gray-400 hover:text-white" onClick={() => window.scrollTo(0,0)}>Documentation</Link></li>
+              <li><Link to="/api" className="text-gray-400 hover:text-white" onClick={() => window.scrollTo(0,0)}>API Access</Link></li>
+              <li><Link to="/bulk" className="text-gray-400 hover:text-white" onClick={() => window.scrollTo(0,0)}>Bulk Predictions</Link></li>
             </ul>
           </div>
 

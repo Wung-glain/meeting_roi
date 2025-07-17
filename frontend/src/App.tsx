@@ -32,7 +32,7 @@ import UserProfile from "./pages/user/UserProfile";
 import BillingAndPlans from "./pages/user/BillingsAndPlans";
 import APICredentials from "./pages/user/APICredentials";
 import IsVerified from "./pages/auth/IsVerified";
- 
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -51,16 +51,19 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
+      
       <CookieBanner />
+      
       <TooltipProvider>
         <Toaster />
         <Sonner />
-
+        <ScrollToTop />
         <div className="flex flex-col min-h-screen">
           {!hideLayout && <Navbar />}
 
           <main className="flex-1">
             <Routes>
+             
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
