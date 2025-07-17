@@ -5,6 +5,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import API_BASE_URL from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
 
 // Button Component with correct prop types
 type ButtonProps = {
@@ -50,7 +51,7 @@ const Button: React.FC<ButtonProps> = ({
 const IsVerified: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const {user , login} = useAuth();
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
@@ -75,9 +76,39 @@ const IsVerified: React.FC = () => {
         const response = await axios.post(`${API_BASE_URL}/auth/verify`, { token });
 
         if (response.status === 200) {
+  
+        // ✅ Call /auth/me to check latest user status
+        const checkVerified = async () => {
+          try {
+            const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+              headers: {
+                Authorization: `Bearer ${token}`, // Or wherever you're storing it
+              },
+            });
+
+            const user = await meResponse.json();
+
+            if (user?.email_verified) {
+              // Optionally update your global auth context here
+              login(user); // from useAuth()
+                       setVerificationStatus('success');
+          setMessage('Your email has been successfully verified!');
+              setTimeout(() => navigate('/dashboard'), 5000);
+            } else {
+              setVerificationStatus("error");
+              setMessage("Email not verified yet.");
+            }
+          } catch {
+            setVerificationStatus("error");
+            setMessage("Error checking verification.");
+          }
+        };
+
+        await checkVerified(); // ✅ Wait for check
+    
           setVerificationStatus('success');
           setMessage('Your email has been successfully verified!');
-          setTimeout(() => navigate('/dashboard'), 3000);
+    
         } else {
           setVerificationStatus('error');
           setMessage(response.data.message || 'Email verification failed.');

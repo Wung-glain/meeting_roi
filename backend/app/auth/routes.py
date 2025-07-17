@@ -125,8 +125,12 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email_verified": current_user.email_verified,
     }
 
-@router.get("/verify")
-def verify_email(token: str, db: Session = Depends(get_db)):
+class TokenPayload(BaseModel):
+    token: str
+
+@router.post("/verify")
+def verify_email(payload: TokenPayload, db: Session = Depends(get_db)):
+    token = payload.token
     try:
         user_id = verify_email_token(token)
         if not user_id:
@@ -142,9 +146,8 @@ def verify_email(token: str, db: Session = Depends(get_db)):
         user.email_verified = True
         db.commit()
         return {"message": "Email Verified"}
-
-    except JWTError:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 #API for passowrd reset email
 @router.post("/request-password-reset")
 async def resend_verification_email(data: ResetPasswordRequest, db: Session = Depends(get_db)):
