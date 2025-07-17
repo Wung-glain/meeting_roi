@@ -1,5 +1,5 @@
 // Prediction.tsx
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import API_BASE_URL from "@/utils/api";
 import { Button } from "@/components/ui/button"; // Assuming relative path for Button
 import { Input } from "@/components/ui/input"; // Assuming relative path for Input
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch"; // Assuming relative path for S
 import { TrendingUp, AlertCircle, Info, CheckCircle, UploadCloud, FileText, XCircle, Users, Briefcase } from "lucide-react"; // Added new icons
 import { useAuth } from '@/context/AuthContext.tsx'; // Import useAuth from your AuthContext
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import axios from "axios";
 // Define the structure for the prediction result
 interface PredictionResult {
@@ -70,6 +71,8 @@ const Prediction: React.FC = () => {
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const [highlightResult, setHighlightResult] = useState(false);
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +88,10 @@ const Prediction: React.FC = () => {
     setLoading(true);
     setError(null);
     setPrediction(null);
-    
+          setHighlightResult(true);
+      setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100); // slight delay ensures DOM update
 const apiPayload = {
   time_block: formData.time_block,                    // e.g., "Morning"
   remote: formData.remote,                              // boolean
@@ -103,7 +109,11 @@ const apiPayload = {
     console.log(apiPayload);
     try {
       const response = await axios.post(`${API_BASE_URL}/api/predict_one`, apiPayload);
-
+      setHighlightResult(true);
+      setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100); // slight delay ensures DOM update
+     
       if (!response) {
         const errorData = await response.data;
         console.log(errorData);
@@ -124,6 +134,7 @@ const apiPayload = {
   };
 
   const resetForm = () => {
+    setHighlightResult(false);
     setFormData({
       meeting_title: "",
       agenda_format: "",
@@ -436,7 +447,11 @@ const apiPayload = {
           </Card>
 
           {/* Results Card */}
-          <Card className="rounded-xl shadow-lg">
+          <Card  ref={resultRef}
+        className={cn(
+          "w-full md:w-2/8 p-4 transition-all duration-300",
+          highlightResult ? "border-1 border-green-300 shadow-lg ring-2 ring-green-500" : "border"
+        )}>
             <CardHeader className="border-b pb-4">
               <CardTitle className="text-2xl font-bold text-gray-800">Prediction Results</CardTitle>
               <CardDescription className="text-gray-600">AI-powered analysis of your meeting</CardDescription>
