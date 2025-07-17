@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { useLocation,Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -31,52 +31,68 @@ import APIAccess from "./pages/APIAccess";
 import UserProfile from "./pages/user/UserProfile";
 import BillingAndPlans from "./pages/user/BillingsAndPlans";
 import APICredentials from "./pages/user/APICredentials";
-
+import IsVerified from "./pages/auth/IsVerified";
+ 
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <CookieBanner />
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+const App = () => {
+  const location = useLocation();
+  const hideLayoutRoutes = [
+    "/auth/verify",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email"
+  ];
 
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
+  const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/billing" element={<BillingAndPlans />} />
-            <Route path="/api-credentials" element={<APICredentials />} />
-            <Route path="/predict" element={<Prediction />} />
-            <Route path="/api" element={<APIAccess />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsAndConditions />} />
-            <Route path="/refund" element={<RefundPolicy />} />
-            <Route path="/security" element={<SecurityPolicy />} />
-            <Route path="/cookies" element={<CookiePolicy />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <CookieBanner />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
 
-        <Footer />
-      </div>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        <div className="flex flex-col min-h-screen">
+          {!hideLayout && <Navbar />}
+
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/auth/verify" element={<IsVerified />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/billing" element={<BillingAndPlans />} />
+              <Route path="/api-credentials" element={<APICredentials />} />
+              <Route path="/predict" element={<Prediction />} />
+              <Route path="/api" element={<APIAccess />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="features" element={<Features />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/refund" element={<RefundPolicy />} />
+              <Route path="/security" element={<SecurityPolicy />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+
+          {!hideLayout && <Footer />}
+        </div>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

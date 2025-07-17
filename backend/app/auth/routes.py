@@ -137,7 +137,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="User not found")
 
         if user.email_verified:
-            return {"message": "Email already verified"}
+            return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard")
 
         user.email_verified = True
         db.commit()
