@@ -39,7 +39,7 @@ const queryClient = new QueryClient();
 const App = () => {
   const location = useLocation();
   const hideLayoutRoutes = [
-    "/auth/verify",
+    "/isverified",
     "/login",
     "/signup",
     "/forgot-password",
@@ -64,7 +64,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/auth/verify" element={<IsVerified />} />
+              <Route path="/isverified" element={<IsVerified />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-email" element={<VerifyEmail />} />

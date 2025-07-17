@@ -125,7 +125,7 @@ const Navbar = () => {
                     <User className="text-blue-600 w-5 h-5" />
                   </div>
                   <span className="text-base font-medium text-gray-800">
-                    {getFirstName(user?.full_name || "User")}
+                  {user?.full_name}
                   </span>
                   <ChevronDown
                     className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
