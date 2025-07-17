@@ -203,4 +203,4 @@ def send_reset_pass(to_email: str, token: str):
             print(f"Password reset email sent to {to_email}!")
     except Exception as e:
         print(f"Error sending password reset email to {to_email}:", e)
-        raise # Re-raise the exception for upstream error handli
+        raise # Re-raise the exception for upstream error handling
