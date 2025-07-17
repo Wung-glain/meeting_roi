@@ -33,6 +33,7 @@ import BillingAndPlans from "./pages/user/BillingsAndPlans";
 import APICredentials from "./pages/user/APICredentials";
 import IsVerified from "./pages/auth/IsVerified";
 import ScrollToTop from "./components/ScrollToTop";
+import AdminDashBoard from "./pages/AdminDashBoard";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +45,8 @@ const App = () => {
     "/signup",
     "/forgot-password",
     "/reset-password",
-    "/verify-email"
+    "/verify-email",
+    "/admin-dashboard"
   ];
 
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
@@ -87,6 +89,7 @@ const App = () => {
               <Route path="/refund" element={<RefundPolicy />} />
               <Route path="/security" element={<SecurityPolicy />} />
               <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="/admin-dashboard" element={<AdminDashBoard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

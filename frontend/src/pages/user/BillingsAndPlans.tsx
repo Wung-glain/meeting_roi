@@ -52,7 +52,7 @@ const mockPaymentHistory = [
 
 const BillingAndPlans: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth() ?? {};
+  const { user, loading } = useAuth();
 
   const [billingData, setBillingData] = useState({
     subscription_plan: user?.subscription_plan || "Free Tier",
@@ -62,6 +62,7 @@ const BillingAndPlans: React.FC = () => {
   });
 
   useEffect(() => {
+    if(loading) return;
     if (user) {
       setBillingData({
         subscription_plan: user.subscription_plan || "Free Tier",
@@ -72,7 +73,7 @@ const BillingAndPlans: React.FC = () => {
     } else {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user,loading, navigate]);
 
   const handleManageSubscription = () => {
     toast.info("Redirecting to subscription management...");

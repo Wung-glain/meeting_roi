@@ -8,7 +8,7 @@ interface User {
   subscription_plan?: string;
   plan_expires?: string;
   last_payment?: string;
-  paymennt_method?: string;
+  payment_method?: string;
 
 }
 
