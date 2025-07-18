@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, BarChart3, TrendingUp, Users, CheckCircle, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import HeroCarousel from "@/components/Carousel";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -83,7 +84,31 @@ const Index = () => {
           </div>
         </div>
       </div>
-
+ {/* How It Works Section */}
+      <div className="bg-white py-16">
+        <div className="container mx-auto px-15">
+         
+          <div className="grid md:grid-cols-2 gap-4">
+           <HeroCarousel />
+           {/* CTA Section */}
+      <div className="bg-blue-600 py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Transform Your Meetings?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Join thousands of teams who are already saving time and money.
+          </p>
+          <Link to="/signup">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
+              Start Free Trial Today
+            </Button>
+          </Link>
+        </div>
+      </div>
+          </div>
+        </div>
+      </div>
       {/* Features Section */}
       <div className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
@@ -148,22 +173,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="bg-blue-600 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Transform Your Meetings?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of teams who are already saving time and money.
-          </p>
-          <Link to="/signup">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-              Start Free Trial Today
-            </Button>
-          </Link>
-        </div>
-      </div>
+      
     </div>
   );
 };

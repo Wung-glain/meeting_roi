@@ -34,6 +34,7 @@ import APICredentials from "./pages/user/APICredentials";
 import IsVerified from "./pages/auth/IsVerified";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminDashBoard from "./pages/AdminDashBoard";
+import Admin from "./pages/Amin";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +47,8 @@ const App = () => {
     "/forgot-password",
     "/reset-password",
     "/verify-email",
-    "/admin-dashboard"
+    "/admin-dashboard",
+    "/admin"
   ];
 
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
@@ -90,6 +92,7 @@ const App = () => {
               <Route path="/security" element={<SecurityPolicy />} />
               <Route path="/cookies" element={<CookiePolicy />} />
               <Route path="/admin-dashboard" element={<AdminDashBoard />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

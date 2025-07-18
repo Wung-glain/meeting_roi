@@ -34,7 +34,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
     setIsProfileDropdownOpen(false); // Close dropdown on logout
     if (dropdownTimeoutId) clearTimeout(dropdownTimeoutId); // Clear any pending timeout
   };
