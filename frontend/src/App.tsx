@@ -34,7 +34,7 @@ import APICredentials from "./pages/user/APICredentials";
 import IsVerified from "./pages/auth/IsVerified";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminDashBoard from "./pages/AdminDashBoard";
-import Admin from "./pages/Amin";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 

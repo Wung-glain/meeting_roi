@@ -1,11 +1,34 @@
-
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { CLIENT_SIDE_TOKEN, PRO_PRODUCT_ID, BUSINESS_PRODUCT_ID, CHECKOUT_CANCEL_URL, CHECKOUT_SUCC_URL } from "@/utils/product";
+
+// Declare global Paddle object for TypeScript
+declare global {
+  interface Window {
+    Paddle: any; // Paddle.js v2 type definition can be more specific if needed
+  }
+}
 
 const Pricing = () => {
+  const [paddleReady, setPaddleReady] = useState(false);
+
+  useEffect(() => {
+    const waitForPaddle = () => {
+      // Check if window.Paddle exists and has the expected v2 structure (e.g., Checkout object)
+      if (window.Paddle && typeof window.Paddle.Checkout !== 'undefined') {
+        // Paddle.Setup is already handled in index.html for v2 token.
+        // No need to call window.Paddle.Setup({ vendor: ... }) here, as it's for v1.
+        setPaddleReady(true);
+      } else {
+        setTimeout(waitForPaddle, 100);
+      }
+    };
+    waitForPaddle();
+  }, []);
+
   const plans = [
     {
       name: "Free",
@@ -23,10 +46,13 @@ const Pricing = () => {
       ],
       cta: "Get Started",
       popular: false,
+      // For free plans, productId can remain null or be a specific free plan ID if Paddle supports it.
+      // We won't call Paddle.Checkout for null productId.
+      productId: null,
     },
     {
       name: "Pro",
-      price: "$29",
+      price: "$25",
       period: "per month",
       description: "For teams and regular users",
       features: [
@@ -40,10 +66,12 @@ const Pricing = () => {
       ],
       cta: "Start Pro Trial",
       popular: true,
+      // Ensure this is a valid Price ID from your Paddle Dashboard (Sandbox if testing)
+      productId: PRO_PRODUCT_ID,
     },
     {
       name: "Business",
-      price: "$99",
+      price: "$59",
       period: "per month",
       description: "For larger organizations",
       features: [
@@ -57,8 +85,51 @@ const Pricing = () => {
       ],
       cta: "Start Business Trial",
       popular: false,
+      // Ensure this is a valid Price ID from your Paddle Dashboard (Sandbox if testing)
+      productId: BUSINESS_PRODUCT_ID,
     },
   ];
+
+  const handleCheckout = (priceId: string | null) => {
+    if (!priceId) {
+      alert("Free plan activated! Sign up to get started.");
+      return;
+    }
+
+    if (!paddleReady) {
+      alert("Payment system is still loading, please try again in a moment.");
+      return;
+    }
+
+    if (window.Paddle) {
+      window.Paddle.Checkout.open({
+        // CORRECTED: Use 'items' array with 'priceId' and 'quantity' for Paddle Billing (v2)
+        items: [
+          {
+            priceId: priceId, // Use the priceId passed from the plan
+            quantity: 1,      // Default quantity to 1 for subscription
+          },
+        ],
+        // Optional: Pre-fill customer email if you have it
+        customer: {
+          email: "cool@example.com", // Replace with actual user's email if available
+        },
+        // REQUIRED: Define success and cancel URLs for Paddle Billing (v2)
+        // Updated to explicitly use localhost:8080
+        successUrl: CHECKOUT_SUCC_URL,
+        cancelUrl: CHECKOUT_CANCEL_URL,
+        // successCallback and closeCallback are also available for more control
+        // successCallback: () => {
+        //   alert("Thank you for subscribing!");
+        // },
+        // closeCallback: () => {
+        //   console.log("Checkout closed by user.");
+        // }
+      });
+    } else {
+      alert("Paddle checkout failed to load or initialize.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -76,14 +147,17 @@ const Pricing = () => {
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {plans.map((plan, index) => (
-            <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''}`}>
+            <Card
+              key={index}
+              className={`relative ${plan.popular ? "ring-2 ring-blue-500 scale-105" : ""}`}
+            >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500">
                   <Star className="h-3 w-3 mr-1" />
                   Most Popular
                 </Badge>
               )}
-              
+
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 <div className="mt-4">
@@ -92,7 +166,9 @@ const Pricing = () => {
                     <span className="text-gray-500 ml-1">/{plan.period}</span>
                   )}
                 </div>
-                <CardDescription className="mt-2">{plan.description}</CardDescription>
+                <CardDescription className="mt-2">
+                  {plan.description}
+                </CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -104,7 +180,11 @@ const Pricing = () => {
                       ) : (
                         <X className="h-4 w-4 text-gray-300" />
                       )}
-                      <span className={`text-sm ${feature.included ? 'text-gray-900' : 'text-gray-400'}`}>
+                      <span
+                        className={`text-sm ${
+                          feature.included ? "text-gray-900" : "text-gray-400"
+                        }`}
+                      >
                         {feature.name}
                       </span>
                     </div>
@@ -112,57 +192,17 @@ const Pricing = () => {
                 </div>
 
                 <div className="pt-4">
-                  {plan.name === "Enterprise" ? (
-                    <Link to="/contact">
-                      <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link to="/signup">
-                      <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  )}
+                  <Button
+                    className="w-full"
+                    variant={plan.popular ? "default" : "outline"}
+                    onClick={() => handleCheckout(plan.productId)}
+                  >
+                    {plan.cta}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        {/* FAQ Section */}
-        <div className="mt-20 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-          <div className="space-y-6">
-            {[
-              {
-                question: "Can I change plans at any time?",
-                answer: "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any charges."
-              },
-              {
-                question: "What happens if I exceed my monthly limit?",
-                answer: "On the Free plan, you'll need to upgrade to continue using the service. On paid plans, we'll notify you before you reach your limit."
-              },
-              {
-                question: "Do you offer annual discounts?",
-                answer: "Yes! Annual plans receive a 20% discount. Contact us for more details about annual billing."
-              },
-              {
-                question: "Is there a free trial for paid plans?",
-                answer: "Yes, all paid plans come with a 14-day free trial. No credit card required to start."
-              },
-            ].map((faq, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{faq.question}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{faq.answer}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </div>
       </div>
     </div>

@@ -7,8 +7,38 @@
     <meta name="description" content="meetingroi" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+   
+
+
 
   </head>
+    <!-- IMPORTANT: This script will wait for Paddle.js to be ready -->
+<script type="module">
+      // Function to initialize Paddle
+      function initializePaddle() {
+        if (window.Paddle && typeof window.Paddle.Setup === 'function') {
+          // Paddle is ready, set environment and token
+          Paddle.Environment.set(import.meta.env.VITE_PADDLE_ENVIRONMENT);
+          Paddle.Setup({
+            token: import.meta.env.VITE_PADDLE_CLIENT_SIDE_TOKEN
+          });
+          console.log("Paddle.js initialized successfully!");
+        } else {
+          // Paddle not ready yet, try again after a short delay
+          console.log("Waiting for Paddle.js to load...");
+          setTimeout(initializePaddle, 100); // Poll every 100ms
+        }
+      }
+
+      // Start the initialization process when the DOM is fully loaded
+      // This is generally safer than 'load' for scripts that don't depend on images/styles
+      document.addEventListener('DOMContentLoaded', initializePaddle);
+
+      // Fallback/alternative: You could also use window.onload if DOMContentLoaded isn't enough
+      // window.addEventListener('load', initializePaddle); 
+      // Choose one that works best for your specific setup. DOMContentLoaded is usually faster.
+    </script>
 
   <body>
     <div id="root"></div>
