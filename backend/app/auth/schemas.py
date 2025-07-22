@@ -8,7 +8,6 @@ class RegisterUser(BaseModel):
     full_name: str
     email: EmailStr
     password: str
-    plan: str  # 'free' or 'premium' etc.
     
 class UserCreate(BaseModel):
     email: EmailStr

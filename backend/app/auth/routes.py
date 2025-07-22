@@ -63,8 +63,6 @@ def register(user: RegisterUser, db: Session = Depends(get_db)):
         status="active",
         start_date = datetime.now(timezone.utc),
         end_date=None,
-        stripe_customer_id=None,
-        stripe_subscription_id=None
     )
     db.add(new_sub)
     db.commit()
