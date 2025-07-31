@@ -17,11 +17,144 @@ import NotificationsAlerts from './admin/Notification';
 import SettingsAccessControl from './admin/SettingsAccessControl';
 import BulkUploadSection from './admin/BulkUpload';
 import CustomReportBuilder from './admin/CustomReportBuilder';
+import Prediction from './Prediction'; // Assuming this is for a general prediction page
+import MakePrediction from './admin/MakePrediction'; // Assuming this is an admin-specific prediction tool
+
+// A generic skeleton component to display while content loads
+const PageSkeleton = ({ pageKey }) => {
+  // Common shimmering effect styles
+  const shimmerStyles = `
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
+    .shimmer-effect {
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.2) 20%, 
+        rgba(255, 255, 255, 0.5) 60%, 
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: shimmer 1.5s infinite linear;
+      pointer-events: none;
+    }
+    .dark .shimmer-effect {
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.05) 20%, 
+        rgba(255, 255, 255, 0.1) 60%, 
+        rgba(255, 255, 255, 0) 100%
+      );
+    }
+  `;
+
+  const renderSpecificSkeleton = () => {
+    switch (pageKey) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            {/* Header Skeleton */}
+            <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-6 relative z-20"></div>
+            
+            {/* Stats Cards Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+              ))}
+            </div>
+
+            {/* Chart Area Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+            </div>
+
+            {/* Recent Activity/Table Skeleton */}
+            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+          </div>
+        );
+      case 'meetings':
+        return (
+          <div className="space-y-6">
+            {/* Header Skeleton */}
+            <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-6 relative z-20"></div>
+
+            {/* Filters and Search Section Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="col-span-full h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded relative z-20"></div>
+            </div>
+
+            {/* Table Skeleton */}
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 space-y-3 relative z-20">
+              <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded w-full"></div> {/* Table Header */}
+              {[...Array(7)].map((_, i) => ( // More rows for a table
+                <div key={i} className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+              ))}
+            </div>
+
+            {/* Pagination Skeleton */}
+            <div className="flex justify-center items-center space-x-2 mt-6 relative z-20">
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+        );
+      case 'prediction':
+      case 'analytics':
+      case 'upload':
+      case 'reports':
+      case 'teams':
+      case 'api-integrations':
+      case 'cost-forecast':
+      case 'notifications':
+      case 'billing':
+      case 'settings':
+      default:
+        // Generic skeleton for other pages
+        return (
+          <div className="space-y-6">
+            {/* Header Skeleton */}
+            <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-6 relative z-20"></div>
+            
+            {/* Content Blocks Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+            </div>
+            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg relative z-20"></div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8 rounded-lg bg-white dark:bg-gray-800 shadow-md relative overflow-hidden">
+      {/* Shimmer effect overlay */}
+      <div className="absolute inset-0 shimmer-effect z-10"></div>
+      {renderSpecificSkeleton()}
+      <style>{shimmerStyles}</style> {/* Apply shimmer styles */}
+    </div>
+  );
+};
+
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showNavbar, setShowNavbar] = useState(true);
-  const [showContent, setShowContent] = useState(true);
+  const [showContent, setShowContent] = useState(true); // Controls opacity of content
+  const [loadingPage, setLoadingPage] = useState(false); // New state for skeleton loading
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -47,6 +180,8 @@ const App = () => {
     switch (currentPage) {
       case 'dashboard':
         return <AnalyticsDashboard meetings={mockMeetings} isDarkMode={isDarkMode} />;
+      case 'prediction':
+        return <MakePrediction />; // Assuming MakePrediction is the correct component for 'prediction'
       case 'meetings':
         return <MeetingExplorer meetings={mockMeetings} isDarkMode={isDarkMode} />;
       case 'analytics':
@@ -72,19 +207,23 @@ const App = () => {
     }
   }, [currentPage, isDarkMode]);
 
-  // Handles navigation with smooth hide/show animation of content
+  // Handles navigation with smooth hide/show animation of content and skeleton loading
   const handleNavClick = (pageKey: string) => {
-    // Close sidebar on mobile
-    setIsSidebarOpen(false);
+    setIsSidebarOpen(false); // Close sidebar on mobile
+    
+    setLoadingPage(true); // Immediately show skeleton
 
-    // Animate content hide
-    setShowContent(false);
-
-    // After animation delay (300ms), switch page and show content again
+    // After a short delay (300ms) for the old content to fade out,
+    // switch the page content and then fade in the new content.
     setTimeout(() => {
       setCurrentPage(pageKey);
-      setShowContent(true);
-    }, 300);
+      // A small additional delay to ensure the new component has mounted
+      // before the skeleton is hidden and content is shown.
+      setTimeout(() => {
+        setLoadingPage(false); // Hide skeleton
+        setShowContent(true); // Show new content
+      }, 100); // This delay can be adjusted if content takes longer to render
+    }, 300); // This delay controls how long the old content fades out
   };
 
   return (
@@ -103,6 +242,7 @@ const App = () => {
         <nav className="mt-1 space-y-2 px-1">
           {[
             { key: 'dashboard', label: 'Dashboard', icon: <Home size={20} /> },
+            { key: 'prediction', label: 'Prediction', icon: <BarChart2 size={20} /> },
             { key: 'meetings', label: 'Meeting Explorer', icon: <Layers size={20} /> },
             { key: 'analytics', label: 'AI Insights & Analytics', icon: <BarChart2 size={20} /> },
             { key: 'reports', label: 'Custom Reports', icon: <FileText size={20} /> },
@@ -166,12 +306,12 @@ const App = () => {
         {/* Animated Content */}
         <main
           className={`flex-1 p-6 overflow-x-hidden bg-gray-100 dark:bg-gray-900 transition-colors duration-100
-            transition-opacity duration-100 ease-in-out
+             ease-in-out // Increased duration for smoother fade
             ${showContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
           style={{ minHeight: 'calc(100vh - 64px)' }} // to keep full height minus navbar height approx.
         >
-          {renderPage()}
+          {loadingPage ? <PageSkeleton pageKey={currentPage} /> : renderPage()}
         </main>
       </div>
 

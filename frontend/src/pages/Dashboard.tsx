@@ -1,22 +1,42 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Users, DollarSign, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+import API_BASE_URL from "@/utils/api";
 
 const Dashboard = () => {
-  const { user , loading} = useAuth();
+  const { user, loading } = useAuth();
+  console.log(user)
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+
+  const [overview, setOverview] = useState({
+    total_estimated_cost: 0,
+    total_meeting_analyzed: 0,
+    total_roi: 0,
+    total_estimated_value_gain: 0,
+  });
+
+  const [recentPredictions, setRecentPredictions] = useState<
+    { id: number; title: string; result: string; confidence: number; date: string }[]
+  >([]);
 
   const getFirstName = (fullName = "") => {
     return fullName.trim().split(" ")[0];
   };
 
   useEffect(() => {
-    if(loading) return;
+    if (loading) return;
     if (!user) {
       navigate("/login");
       return;
@@ -27,7 +47,51 @@ const Dashboard = () => {
       return;
     }
 
-    setChecking(false); // Passed all checks
+    const fetchStats = async () => {
+      
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/meeting_statistics/${user.user_id}`);
+
+        const o = res.data.overview;
+        const preds = res.data.recent_predictions;
+        console.log(o);
+        console.log(preds);
+
+        setOverview({
+          total_estimated_cost: o.total_estimated_cost || 0,
+          total_meeting_analyzed: o.total_meeting_analyzed || 0,
+          total_roi: o.total_roi || 0,
+          total_estimated_value_gain: o.total_estimated_value_gain || 0,
+        });
+
+        if (preds.length === 0) {
+          setRecentPredictions([
+            {
+              id: 1,
+              title: "Weekly Sync",
+              result: "Productive",
+              confidence: 85,
+              date: new Date().toISOString().split("T")[0],
+            },
+          ]);
+        } else {
+          const formatted = preds.map((p: any, index: number) => ({
+            id: index + 1,
+            title: p.meeting_title,
+            result: p.is_productive ? "Productive" : "Not Productive",
+            confidence: Number(p.confidence_score),
+            date: p.date,
+          }));
+          setRecentPredictions(formatted);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    fetchStats();
   }, [user, loading, navigate]);
 
   if (checking) {
@@ -39,16 +103,10 @@ const Dashboard = () => {
   }
 
   const stats = {
-    predictionsUsed: 47,
+    predictionsUsed: overview.total_meeting_analyzed,
     monthlyLimit: 100,
-    costSavings: 2450,
-    lastPredictions: [
-      { id: 1, title: "Weekly Standup", result: "Productive", confidence: 87, date: "2024-01-15" },
-      { id: 2, title: "Strategy Meeting", result: "Not Productive", confidence: 92, date: "2024-01-14" },
-      { id: 3, title: "Team Retrospective", result: "Productive", confidence: 78, date: "2024-01-13" },
-      { id: 4, title: "Client Review", result: "Productive", confidence: 95, date: "2024-01-12" },
-      { id: 5, title: "Planning Session", result: "Not Productive", confidence: 83, date: "2024-01-11" },
-    ]
+    costSavings: overview.total_estimated_value_gain,
+    lastPredictions: recentPredictions,
   };
 
   return (
@@ -58,7 +116,9 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back {getFirstName(user?.full_name || "User")}
           </h1>
-          <p className="text-gray-600">Here's your meeting productivity overview</p>
+          <p className="text-gray-600">
+            Here's your meeting productivity overview
+          </p>
         </div>
 
         {/* Quick Stats */}
@@ -84,19 +144,40 @@ const Dashboard = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.costSavings.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Estimated time saved this month</p>
+              <div className="text-2xl font-bold">
+                ${stats.costSavings.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Estimated value gain from meetings
+              </p>
+            </CardContent>
+          </Card>
+
+                    <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Meeting Cost</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${overview.total_estimated_cost.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total Cost of Meetings
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Accuracy Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">ROI</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">94%</div>
-              <p className="text-xs text-muted-foreground">Personal prediction accuracy</p>
+              <div className="text-2xl font-bold">
+                ${overview.total_roi.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">Total return on investment</p>
             </CardContent>
           </Card>
 
@@ -106,8 +187,12 @@ const Dashboard = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">127</div>
-              <p className="text-xs text-muted-foreground">Total meetings this month</p>
+              <div className="text-2xl font-bold">
+                {stats.predictionsUsed}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total meetings this month
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -122,7 +207,10 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {stats.lastPredictions.map((prediction) => (
-                    <div key={prediction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div
+                      key={prediction.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{prediction.title}</h4>
                         <p className="text-sm text-gray-500">{prediction.date}</p>
@@ -137,7 +225,9 @@ const Dashboard = () => {
                         >
                           {prediction.result}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">{prediction.confidence}% confidence</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {prediction.confidence}% confidence
+                        </p>
                       </div>
                     </div>
                   ))}

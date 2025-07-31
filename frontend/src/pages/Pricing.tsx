@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { CLIENT_SIDE_TOKEN, PRO_PRODUCT_ID, BUSINESS_PRODUCT_ID, CHECKOUT_CANCEL_URL, CHECKOUT_SUCC_URL } from "@/utils/product";
 
 // Declare global Paddle object for TypeScript
@@ -14,9 +16,13 @@ declare global {
 
 const Pricing = () => {
   const [paddleReady, setPaddleReady] = useState(false);
+  const navigate = useNavigate();
+  const {user, loading} = useAuth();
 
   useEffect(() => {
+    
     const waitForPaddle = () => {
+
       // Check if window.Paddle exists and has the expected v2 structure (e.g., Checkout object)
       if (window.Paddle && typeof window.Paddle.Checkout !== 'undefined') {
         // Paddle.Setup is already handled in index.html for v2 token.
@@ -91,6 +97,15 @@ const Pricing = () => {
   ];
 
   const handleCheckout = (priceId: string | null) => {
+    if(loading) return;
+    if(!user){
+      navigate("/signup");
+      return;
+    }
+    if (!user.email_verified) {
+      navigate("/verify-email");
+      return;
+    }
     if (!priceId) {
       alert("Free plan activated! Sign up to get started.");
       return;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Save, X , FileText, Database , BarChart3, LineChart, PieChart, DollarSign} from "lucide-react";
+import Prediction from "../Prediction";
 
 const CustomReportBuilder = () => {
   const [widgets, setWidgets] = useState([]);
@@ -91,7 +92,9 @@ const CustomReportBuilder = () => {
             {/* In a real app, render actual chart components based on widget.type */}
           </div>
         ))}
+        
       </div>
+      
     </>
   );
 };

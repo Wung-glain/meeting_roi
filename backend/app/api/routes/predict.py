@@ -1,15 +1,13 @@
-from fastapi import APIRouter, Form, File, UploadFile
+from fastapi import APIRouter, Form, File, UploadFile, Depends, HTTPException
+from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import List,Optional
 from fastapi.responses import JSONResponse
-import joblib
 from fastapi import HTTPException
-import pandas as pd
-import traceback
-import numpy as np
-import os
-import io
 from dotenv import load_dotenv
+from app.db.database import get_db
+from app.db.models import MeetingOverview, RecentPrediction
+from app.schemas.meeting_schemas import *
 
 class MeetingInput(BaseModel):
     time_block: str
@@ -237,3 +235,28 @@ router = APIRouter()
 #     except Exception as e:
 #         traceback.print_exc()
 #         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+@router.get("/meeting_statistics/{user_id}", response_model=DashboardResponse)
+def get_dashboard_data(user_id: str, db: Session = Depends(get_db)):
+    # Fetch meeting overview
+    overview = db.query(MeetingOverview).filter(MeetingOverview.user_id == user_id).first()
+    if not overview:
+        overview_data = MeetingOverviewOut(
+            user_id=user_id,
+            total_estimated_cost=0.0,
+            total_meeting_analyzed=0,
+            total_roi=0.0,
+            total_estimated_value_gain=0.0
+        )
+    else:
+        overview_data = MeetingOverviewOut.model_validate(overview)
+
+    # Fetch recent predictions
+    predictions = db.query(RecentPrediction).all()
+    predictions_data = [RecentPredictionOut.model_validate(pred) for pred in predictions]
+
+    return DashboardResponse(
+        overview=overview_data,
+        recent_predictions=predictions_data
+    )

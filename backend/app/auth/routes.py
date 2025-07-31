@@ -48,10 +48,11 @@ def register(user: RegisterUser, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    # Get or create plan
-    plan = db.query(Plan).filter(Plan.name == user.plan).first()
+    # Use provided plan or default to 'free'
+    plan_name = user.plan or "free"
+    plan = db.query(Plan).filter(Plan.name == plan_name).first()
     if not plan:
-        plan = Plan(name=user.plan, description=f"{user.plan.title()} Plan", price_usd=0)
+        plan = Plan(name=plan_name, description=f"{plan_name.title()} Plan", price_usd=0)
         db.add(plan)
         db.commit()
         db.refresh(plan)
@@ -61,7 +62,7 @@ def register(user: RegisterUser, db: Session = Depends(get_db)):
         user_id=new_user.id,
         plan_id=plan.id,
         status="active",
-        start_date = datetime.now(timezone.utc),
+        start_date=datetime.now(timezone.utc),
         end_date=None,
     )
     db.add(new_sub)

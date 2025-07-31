@@ -79,28 +79,41 @@ CREATE TABLE api_usage_logs (
 );
 
 -- 9. Meeting Inputs
-CREATE TABLE meeting_inputs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    duration_minutes INTEGER,
-    attendees_count INTEGER,
-    agenda_clarity INTEGER,
+CREATE TABLE meetings (
+    meeting_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    meeting_title TEXT,
+    agenda_format TEXT,
+    agenda_file TEXT DEFAULT NULL, -- Store file path or URL
+    time_block TEXT,
+    remote BOOLEAN,
+    tool TEXT,
+    meeting_type TEXT,
+    duration INTEGER,
+    attendees INTEGER,
+    agenda_clarity INTEGER[], -- Using array for number[]
     has_action_items BOOLEAN,
-    department_count INTEGER,
-    meeting_cost DECIMAL(10,2),
+    departments TEXT,
+    roles TEXT,
+    average_annual_salary FLOAT,
     meeting_notes TEXT,
+
+    roi FLOAT DEFAULT NULL, -- Will be calculated later
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- 10. Meeting Predictions
 CREATE TABLE meeting_predictions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    meeting_id UUID REFERENCES meeting_inputs(id) ON DELETE CASCADE,
+    meeting_id UUID REFERENCES meetings(meeting_id) ON DELETE CASCADE,
     is_productive BOOLEAN,
     confidence_score DECIMAL(5,2),
     predicted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    model_version TEXT
+    roi DECIMAL(10,2),
+    estimated_cost FLOAT,
+    estimated_value_gain_on_meeting FLOAT,
+    suggestions TEXT
 );
+
 
 -- 11. Admin Users
 CREATE TABLE admin_users (
@@ -158,3 +171,28 @@ JOIN meeting_inputs mi ON u.id = mi.user_id
 JOIN meeting_predictions mp ON mp.meeting_id = mi.id
 WHERE mp.predicted_at >= date_trunc('month', CURRENT_DATE)
 GROUP BY p.name;
+
+CREATE VIEW meeting_overview AS
+SELECT
+    mi.user_id,
+    COALESCE(SUM(mp.estimated_cost), 0) AS total_estimated_cost,
+    COUNT(mp.id) AS total_meeting_analyzed,
+    COALESCE(SUM(mp.roi), 0) AS total_roi,
+    COALESCE(SUM(mp.estimated_value_gain_on_meeting), 0) AS total_estimated_value_gain
+FROM meeting_predictions mp
+JOIN meetings mi ON mp.meeting_id = mi.meeting_id
+GROUP BY mi.user_id;
+
+
+
+CREATE VIEW recent_predictions AS
+SELECT
+    mp.id AS id,
+    mi.meeting_title,
+    mp.predicted_at AS date,
+    mp.is_productive,
+    mp.confidence_score
+FROM meeting_predictions mp
+JOIN meetings mi ON mp.meeting_id = mi.meeting_id
+ORDER BY mp.predicted_at DESC
+LIMIT 10;

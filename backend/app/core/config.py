@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SMTP_PASS: str
     FRONTEND_URL: str
     BACKEND_URL: str
+    PADDLE_API_KEY: str
 
     class Config:
         env_file = ".env"

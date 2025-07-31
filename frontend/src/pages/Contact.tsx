@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 const ContactPage: React.FC = () => {
+  const [loading , setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,15 +21,18 @@ const ContactPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     // In a real application, you would send this data to a backend API
     console.log('Form submitted:', formData);
-    alert('Thank you for your message! We will get back to you soon.'); // Using alert as per instructions
+     // Using alert as per instructions
     setFormData({ // Clear form
       name: '',
       email: '',
       subject: '',
       message: ''
     });
+
+   
   };
 
   return (
@@ -48,7 +53,7 @@ const ContactPage: React.FC = () => {
             </div>
             <div className="flex items-center text-gray-700">
               <Phone size={24} className="text-indigo-600 mr-4" />
-              <span>+1 (555) 123-4567</span>
+              <span>+237 (673) 981-991</span>
             </div>
             <div className="flex items-start text-gray-700">
               <MapPin size={24} className="text-indigo-600 mr-4 mt-1" />
@@ -122,12 +127,28 @@ const ContactPage: React.FC = () => {
                 required
               ></textarea>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Send Message
-            </button>
+            <Button
+                type="submit"
+                className="w-full h-10 text-base font-semibold rounded-md
+                           bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700
+                           text-white shadow-lg transition-all duration-300 transform hover:scale-105
+                           relative overflow-hidden" // Added relative and overflow-hidden for loading animation
+                disabled={loading} // Disable when loading
+              >
+                {loading ? (
+                  <>
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    <span className="opacity-5">Sending Message...</span> {/* Hidden text for button width */}
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
           </form>
         </div>
       </div>

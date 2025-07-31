@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard, // New icon for Dashboard
+  TrendingUp,
   Wallet,          // New icon for Billing
   KeyRound,        // New icon for API Credentials
   ChevronDown      // For dropdown arrow
@@ -30,6 +31,28 @@ const Navbar = () => {
 
   const getFirstName = (fullName = "") => {
     return fullName.trim().split(" ")[0];
+  };
+  const handleProPlanClick = () => {
+    setIsProfileDropdownOpen(false);
+    if (dropdownTimeoutId) clearTimeout(dropdownTimeoutId);
+    if (user.subscription_plan === 'pro' || user.subscription_plan === 'business') {
+      navigate("/dashboard"); // Or a specific Pro dashboard route
+    } else {
+      alert("You are on the Free plan. Upgrade to Pro to access this feature.");
+      
+    }
+  };
+
+  const handleBusinessPlanClick = () => {
+    setIsProfileDropdownOpen(false);
+    if (dropdownTimeoutId) clearTimeout(dropdownTimeoutId);
+    if (user.email_verified) {
+      alert("You are already on the Business plan.");
+      navigate("/admin");
+    } else {
+      navigate("/pricing"); // Redirect to pricing page for upgrade
+      
+    }
   };
 
   const handleLogout = () => {
@@ -164,6 +187,24 @@ const Navbar = () => {
                           {item.name}
                         </Link>
                       ))}
+                      {/* NEW: Pro Plan Dashboard Option */}
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center transition-colors duration-150"
+                        onClick={handleProPlanClick}
+                      >
+                        <LayoutDashboard className="w-4 h-4 mr-2 text-gray-500" />
+                        Pro Plan Dashboard
+                      </button>
+
+                      {/* NEW: Upgrade to Business Plan Option */}
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center transition-colors duration-150"
+                        onClick={handleBusinessPlanClick}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2 text-gray-500" />
+                        Upgrade to Business Plan
+                      </button>
+
                       <div className="border-t border-gray-100 my-1"></div> {/* Separator */}
                       <button
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition-colors duration-150"

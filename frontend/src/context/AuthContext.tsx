@@ -1,14 +1,16 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 interface User {
-  id: string;
-  email: string;
-  full_name?: string;
-  email_verified?: boolean;
-  subscription_plan?: string;
-  plan_expires?: string;
-  last_payment?: string;
-  payment_method?: string;
+  user_id: string;                    // Required: always present from DB
+  email: string;                      // Required: primary identifier
+  full_name?: string;                // Optional: user may not fill this yet
+  email_verified: boolean;           // Required: important for access control
+  subscription_plan?: "free" | "pro" | "business"; // Optional & strict
+  plan_expires?: string | null;     // Optional: ISO date or null if on Free plan
+  last_payment?: string | null;     // Optional: track last successful payment
+  payment_method?: "card" | "paypal" | "mobile_money" | "crypto"; // Optional enum
+  created_at: string;               // Required: useful for logging/analytics
+  updated_at?: string;  
 
 }
 

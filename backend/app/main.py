@@ -3,6 +3,7 @@ from app.core.config import settings
 
 from app.auth import routes as auth_routes
 from app.api.routes import predict as api_routes
+from app.api.routes.paddle_webhook import paddle_router
 from app.api.routes.predict import router
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 app.include_router(auth_routes.router, prefix="/auth", tags=["Authentication"])
 app.include_router(router, prefix="/api", tags=["Meeting ROI"])
+app.include_router(paddle_router, prefix="/webhook", tags=["Paddle Webhook Ingtegration"])
 
 @app.get("/")
 def root():

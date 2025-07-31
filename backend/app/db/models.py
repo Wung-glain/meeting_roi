@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, ForeignKey, Integer
+from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, ForeignKey, Integer, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -44,3 +44,26 @@ class Subscription(Base):
 
     user = relationship("User", back_populates="subscriptions")
     plan = relationship("Plan", back_populates="subscriptions")
+
+
+
+class RecentPrediction(Base):
+    __tablename__ = "recent_predictions"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(Integer, primary_key=True)  # REAL Primary Key
+    meeting_title = Column(String)
+    date = Column(TIMESTAMP)
+    is_productive = Column(Boolean)
+    confidence_score = Column(Float)
+
+
+class MeetingOverview(Base):
+    __tablename__ = "meeting_overview"
+    __table_args__ = {"extend_existing": True}
+
+    user_id = Column(String, primary_key=True)
+    total_estimated_cost = Column(Float)
+    total_meeting_analyzed = Column(Float)
+    total_roi = Column(Float)
+    total_estimated_value_gain = Column(Float)
