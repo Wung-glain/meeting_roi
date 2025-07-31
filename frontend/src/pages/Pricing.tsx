@@ -18,7 +18,7 @@ const Pricing = () => {
   const [paddleReady, setPaddleReady] = useState(false);
   const navigate = useNavigate();
   const {user, loading} = useAuth();
-
+  console.log(user);
   useEffect(() => {
     
     const waitForPaddle = () => {
@@ -127,7 +127,10 @@ const Pricing = () => {
         ],
         // Optional: Pre-fill customer email if you have it
         customer: {
-          email: "cool@example.com", // Replace with actual user's email if available
+          email: user.email //User email
+        },
+        customData: {
+          user_id: user.user_id, // attach your internal user_id here
         },
         // REQUIRED: Define success and cancel URLs for Paddle Billing (v2)
         // Updated to explicitly use localhost:8080
