@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      allowedHosts: ["3629a3bb78e1.ngrok-free.app"],
       headers: {
         // Use the constructed CSP header
         'Content-Security-Policy': cspHeader,

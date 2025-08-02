@@ -21,7 +21,15 @@
           // Paddle is ready, set environment and token
           Paddle.Environment.set(import.meta.env.VITE_PADDLE_ENVIRONMENT);
           Paddle.Setup({
-            token: import.meta.env.VITE_PADDLE_CLIENT_SIDE_TOKEN
+            token: import.meta.env.VITE_PADDLE_CLIENT_SIDE_TOKEN,
+              eventCallback: function(data) {
+              if (data.name == "checkout.completed") {
+                console.log(data);
+              }
+              if(data.name == "checkout.canceled"){
+                console.log("User canceled checkout");
+              }
+            }
           });
           console.log("Paddle.js initialized successfully!");
         } else {

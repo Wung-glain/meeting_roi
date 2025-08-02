@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -32,16 +33,17 @@ const getPasswordStrength = (password) => {
 
 const SignUp = () => {
   const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     full_name: localStorage.getItem("full_name") || "",
     email: localStorage.getItem("email") || "",
     password: "",
     confirmPassword: "",
   });
-  const [isLoading, setIsLoading] = useState(false); 
-  // New state to track if password field is focused
+  const [isLoading, setIsLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ const SignUp = () => {
   const fullNameValid = sanitizeFullName(formData.full_name).length >= 2;
   const passwordStrength = getPasswordStrength(formData.password);
 
-  const renderCheck = (condition, label) => (
+  const renderCheck = (condition: boolean, label: string) => (
     <div className="flex items-center gap-2 text-sm">
       {condition ? (
         <FaCheckCircle className="text-green-500" />
@@ -74,45 +76,54 @@ const SignUp = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailValid) {
-      alert("Invalid email");
-      return;
-    }
-    if (!passwordsMatch) {
-      alert("Passwords do not match");
-      return;
-    }
-    if (!allPasswordValid) {
-      alert("Password doesn't meet criteria");
-      return;
-    }
+
+    if (!fullNameValid) return alert("Full name must be at least 2 characters");
+    if (!emailValid) return alert("Invalid email address");
+    if (!passwordsMatch) return alert("Passwords do not match");
+    if (!allPasswordValid) return alert("Password doesn't meet strength criteria");
 
     setIsLoading(true);
-
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
-      alert("Registration successful!");
+      const payload = {
+        full_name: sanitizeFullName(formData.full_name),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, payload);
+
+    toast({
+      title: "Registered successfull",
+      description: "Registered Successfully",
+    });
+      // Clear stored data
       localStorage.removeItem("full_name");
       localStorage.removeItem("email");
-      navigate("/verify-email");
-    } catch (error) {
+
+      // Optionally: store user_id for quick reference
+      localStorage.setItem("user_id", response.data.user_id);
+
+      // Redirect to verify or dashboard
+      navigate("/login");
+    } catch (error: any) {
       const message =
-      error?.response?.data?.detail || 
-      error?.response?.data?.message || 
-      error?.response?.data?.error || 
-      "Registration failed. Please try again.";
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Registration failed. Please try again.";
 
-    if (message.toLowerCase().includes("email")) {
-      alert("A User with that email already exists.");
-    } else {
-      alert(message);
-    }
+      if (message.toLowerCase().includes("email")) {
+            toast({
+              title: "Registration Failed",
+              description: "User with email already exist",
+              variant: "destructive",
+            });
+      }
 
-    console.error("Registration error:", message);
-  } finally {
+      console.error("Registration error:", message);
+    } finally {
       setIsLoading(false);
-  }
-    
+    }
   };
 
   return (

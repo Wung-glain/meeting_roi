@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
+import API_BASE_URL from "@/utils/api";
 import { CLIENT_SIDE_TOKEN, PRO_PRODUCT_ID, BUSINESS_PRODUCT_ID, CHECKOUT_CANCEL_URL, CHECKOUT_SUCC_URL } from "@/utils/product";
 
 // Declare global Paddle object for TypeScript
@@ -17,8 +20,11 @@ declare global {
 const Pricing = () => {
   const [paddleReady, setPaddleReady] = useState(false);
   const navigate = useNavigate();
-  const {user, loading} = useAuth();
+const { toast } = useToast();
+  const {user, loading, login} = useAuth();
   console.log(user);
+
+
   useEffect(() => {
     
     const waitForPaddle = () => {
@@ -96,28 +102,63 @@ const Pricing = () => {
     },
   ];
 
-  const handleCheckout = (priceId: string | null) => {
-    if(loading) return;
-    if(!user){
-      navigate("/signup");
-      return;
-    }
-    if (!user.email_verified) {
-      navigate("/verify-email");
-      return;
-    }
-    if (!priceId) {
-      alert("Free plan activated! Sign up to get started.");
-      return;
-    }
+  const handleCheckout = (selectedPlanName: string, priceId: string | null) => {
+  if (loading) return;
 
-    if (!paddleReady) {
-      alert("Payment system is still loading, please try again in a moment.");
-      return;
-    }
+  if (!user) {
+    navigate("/signup");
+    return;
+  }
 
+  if (!user.email_verified) {
+    navigate("/verify-email");
+    return;
+  }
+
+
+  if (!paddleReady) {
+    alert("Payment system is still loading. Please try again shortly.");
+    return;
+  }
+  const currentPlanName = user.subscription_plan?.toLowerCase(); // e.g., "free", "pro", "business"
+  const selectedPlan = selectedPlanName.toLowerCase();
+  if(!priceId && user.subscription_plan === 'free'){
+        toast({
+      title: "Free Plan Activated",
+      description: "You can start using MeetingROI immediately.",
+    });
+    return;
+  }
+  // ✅ Free plan click — skip checkout
+  if (selectedPlan === 'free' && (user.subscription_plan === 'pro' || user.subscription_plan === 'business') ) {
+    toast({
+      title: "Already Subscribed",
+      description: `You're already on the ${user.subscription_plan} plan. Please wait until it expires or choose another plan.`,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // ✅ Prevent subscribing again to same plan if it hasn’t expired
+  const planExpires = user.plan_expires ? new Date(user.plan_expires) : null;
+  const now = new Date();
+  const isPlanExpired = planExpires ? now > planExpires : true;  // ⛔️ Prevent subscribing again to the same plan if it's not expired
+  if (!isPlanExpired && selectedPlanName.toLowerCase() === currentPlanName?.toLowerCase()) {
+    toast({
+      title: "Already Subscribed",
+      description: `You're already on the ${selectedPlanName} plan. Please wait until it expires or choose another plan.`,
+      variant: "destructive",
+    });
+    return;
+  }
     if (window.Paddle) {
       window.Paddle.Checkout.open({
+        settings: {
+          displayMode: "overlay",
+          theme: "light",
+          locale: "en",
+          
+        },
         // CORRECTED: Use 'items' array with 'priceId' and 'quantity' for Paddle Billing (v2)
         items: [
           {
@@ -127,22 +168,28 @@ const Pricing = () => {
         ],
         // Optional: Pre-fill customer email if you have it
         customer: {
-          email: user.email //User email
+          email: "name@gmail.com" //User email
         },
         customData: {
           user_id: user.user_id, // attach your internal user_id here
         },
         // REQUIRED: Define success and cancel URLs for Paddle Billing (v2)
         // Updated to explicitly use localhost:8080
-        successUrl: CHECKOUT_SUCC_URL,
-        cancelUrl: CHECKOUT_CANCEL_URL,
+
         // successCallback and closeCallback are also available for more control
-        // successCallback: () => {
-        //   alert("Thank you for subscribing!");
-        // },
-        // closeCallback: () => {
-        //   console.log("Checkout closed by user.");
-        // }
+    successCallback: () => {
+      toast({
+        title: "Subscribed!",
+        description: "Your plan has been updated successfully.",
+      });
+      window.location.href = CHECKOUT_SUCC_URL;
+    },
+    closeCallback: () => {
+      toast({
+        title: "Checkout Cancelled",
+        description: "You closed the subscription window.",
+      });
+    },
       });
     } else {
       alert("Paddle checkout failed to load or initialize.");
@@ -213,7 +260,7 @@ const Pricing = () => {
                   <Button
                     className="w-full"
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleCheckout(plan.productId)}
+                    onClick={() => handleCheckout(plan.name, plan.productId)}
                   >
                     {plan.cta}
                   </Button>

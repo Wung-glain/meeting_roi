@@ -35,6 +35,8 @@ import IsVerified from "./pages/auth/IsVerified";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminDashBoard from "./pages/AdminDashBoard";
 import Admin from "./pages/Admin";
+import Success from "./pages/Success";
+import Cancel from "./pages/Cancel";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +96,8 @@ const App = () => {
               <Route path="/admin-dashboard" element={<AdminDashBoard />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
+              <Route path="/checkout/success" element={<Success />} />
+              <Route path="/checkout/cancel" element={<Cancel />} />
             </Routes>
           </main>
 

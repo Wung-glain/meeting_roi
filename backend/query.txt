@@ -1,5 +1,5 @@
 -- 1. Users Table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name VARCHAR(100),
     email VARCHAR(150) UNIQUE NOT NULL,
@@ -7,6 +7,9 @@ CREATE TABLE users (
     profile_picture TEXT,
     company_name VARCHAR(100),
     email_verified BOOLEAN DEFAULT FALSE,
+    plan_status VARCHAR(50) DEFAULT 'free' NOT NULL, -- New field
+    paddle_customer_id TEXT UNIQUE,                 -- New field
+    paddle_current_subscription_id TEXT UNIQUE,     -- New field
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -36,15 +39,20 @@ CREATE TABLE plans (
 );
 
 -- 5. Subscriptions
-CREATE TABLE subscriptions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    plan_id INTEGER REFERENCES plans(id),
-    status VARCHAR(20) CHECK (status IN ('active', 'inactive', 'cancelled')),
-    start_date TIMESTAMP,
-    end_date TIMESTAMP,
-    stripe_customer_id TEXT,
-    stripe_subscription_id TEXT
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique ID for your subscription record
+    user_id UUID NOT NULL REFERENCES users(id),     -- Foreign key to your custom 'users' table
+    paddle_subscription_id TEXT UNIQUE NOT NULL,    -- Paddle's unique subscription ID (e.g., 'sub_01h...')
+    paddle_price_id TEXT NOT NULL,                  -- Paddle's price ID (e.g., 'pri_01h...')
+    status TEXT NOT NULL,                           -- Current status: 'active', 'trialing', 'past_due', 'canceled', 'paused', 'expired'
+    current_period_start TIMESTAMP WITH TIME ZONE,  -- Start of the current billing period
+    current_period_end TIMESTAMP WITH TIME ZONE,    -- End of the current billing period
+    next_billed_at TIMESTAMP WITH TIME ZONE,        -- Next billing date (for recurring subscriptions)
+    cancel_at_period_end BOOLEAN DEFAULT FALSE,     -- True if subscription will cancel at period end
+    unit_price_amount NUMERIC(10, 2),               -- Price per unit (if applicable)
+    quantity INTEGER DEFAULT 1,                     -- Quantity of the subscription (e.g., seats)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 6. Payments
@@ -196,3 +204,19 @@ FROM meeting_predictions mp
 JOIN meetings mi ON mp.meeting_id = mi.meeting_id
 ORDER BY mp.predicted_at DESC
 LIMIT 10;
+
+
+
+
+
+ALTER TABLE subscriptions ADD COLUMN plan_id INTEGER;
+ALTER TABLE subscriptions ADD CONSTRAINT fk_plan_id FOREIGN KEY (plan_id) REFERENCES plans(id);
+
+ALTER TABLE users
+ADD COLUMN plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL;
+INSERT INTO plans (name, price_usd, max_predictions_per_month, description)
+VALUES 
+  ('free', 0.00, 20, 'Basic plan with limited access'),
+  ('pro', 25.00, 100, 'Pro plan for power users'),
+  ('business', 59.00, 500, 'Business tier for teams')
+ON CONFLICT (name) DO NOTHING;

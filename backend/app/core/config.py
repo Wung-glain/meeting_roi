@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str
     BACKEND_URL: str
     PADDLE_API_KEY: str
+    PADDLE_WEBHOOK_SECRET: str
 
     class Config:
         env_file = ".env"

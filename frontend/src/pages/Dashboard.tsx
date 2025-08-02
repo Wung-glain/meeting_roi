@@ -41,12 +41,14 @@ const Dashboard = () => {
       navigate("/login");
       return;
     }
-
     if (!user.email_verified) {
       navigate("/verify-email");
       return;
     }
-
+    if(user.subscription_plan === "free"){
+      navigate("/predict");
+      return;
+    }
     const fetchStats = async () => {
       
       try {

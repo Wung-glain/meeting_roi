@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect,  useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +9,11 @@ import {isValidEmail} from "./SignUp"; // Assuming SignUp is in the same directo
 import axios from "axios";
 import {useAuth} from "@/context/AuthContext";
 import API_BASE_URL from "@/utils/api";
-
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const {login} = useAuth();
+  const { toast } = useToast();
+  const {user, login} = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,14 +22,18 @@ const Login = () => {
     email: "",
     password: "",
   });
-
+ 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(""); // Clear previous errors
     const trimedEmail = formData.email.trim();
     if(!isValidEmail(trimedEmail)){
-      alert("Invalid Email"); // Using alert as per original logic
+      toast({
+          title: "Invalid Email",
+          description: "Invalid Email address",
+          variant: "destructive",
+      });
       setLoading(false);
       return;
     }
@@ -45,8 +50,21 @@ const Login = () => {
       // Redirect based on verification status
       
       if (data.email_verified) {
-        
         login(user);
+            const fetchAndRedirect = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/auth/get-plan/${user.user_id}`);
+        const plan = res.data.plan_name;
+        const plan_expiration = res.data.current_period_end;
+
+        // Optional: update AuthContext with the plan
+        login({ ...user, subscription_plan: plan, plan_expires: plan_expiration });
+      } catch (err) {
+        console.error("Error fetching user plan:", err);
+      }
+    };
+
+    fetchAndRedirect();
         navigate('/dashboard');
       } else {
         login(user);
@@ -62,9 +80,17 @@ const Login = () => {
       "Login failed. Please try again.";
 
     if (message.toLowerCase().includes("invalid")) {
-      setError("Invalid Email or Password");
+    toast({
+      title: "Login Failed",
+      description: "Invalid username or password",
+      variant: "destructive",
+    });
     } else {
-      setError("Invalid Email or Password"); // Keeping this consistent with your original error handling
+        toast({
+          title: "Login Failed",
+          description: "Invalid username or password",
+          variant: "destructive",
+        });// Keeping this consistent with your original error handling
     }
 
     console.error("Login error:", message);
