@@ -209,6 +209,7 @@ const App = () => {
 
   // Handles navigation with smooth hide/show animation of content and skeleton loading
   const handleNavClick = (pageKey: string) => {
+
     setIsSidebarOpen(false); // Close sidebar on mobile
     
     setLoadingPage(true); // Immediately show skeleton

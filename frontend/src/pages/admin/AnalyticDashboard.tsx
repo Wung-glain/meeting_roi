@@ -1,11 +1,14 @@
-import { useState , useMemo } from "react";
+import { useState, useEffect , useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/StatCard";
+import { fetchStats, OverviewData, UserUsage} from "@/utils/fetchStats";
 import ProductivityPieChart from "@/components/ProductivityChart";
 import { formatCurrency } from "@/utils/currencyFormater";
 import { mockMeetings } from "@/utils/generate_meetings";
+
 import {
-  DollarSign,  ThumbsUp, TrendingUp,User, Save, 
+  DollarSign,BarChart3,  ThumbsUp, TrendingUp,User, Save, 
  // Added Key, Loader2, and Brain import
 } from 'lucide-react';
 import {
@@ -16,10 +19,25 @@ import {
 
 // 1. Advanced Meeting Analytics Dashboard
 const AnalyticsDashboard = ({ meetings, isDarkMode }) => {
-  const {user} = useAuth();
+  const {user, loading} = useAuth();
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(false);
+
   const [timeRange, setTimeRange] = useState('all'); // 'all', 'month', 'quarter', 'year'
   const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [selectedMeetingType, setSelectedMeetingType] = useState('All');
+  const [overview, setOverview] = useState<OverviewData>({
+    total_estimated_cost: 0,
+    total_meeting_analyzed: 0,
+    total_roi: 0,
+    total_estimated_value_gain: 0,
+    total_productive_meetings: 0,
+  });
+  const [userD, setUserD] = useState<UserUsage>({
+    predictions_used: 0,
+    max_predictions_per_month: 0,
+  });
+
 
   const filteredMeetings = useMemo(() => {
     let filtered = meetings;
@@ -51,7 +69,9 @@ const AnalyticsDashboard = ({ meetings, isDarkMode }) => {
   const productiveMeetingsCount = filteredMeetings.filter(m => m.isProductive === 'Productive').length;
   const totalFilteredMeetings = filteredMeetings.length;
   const productivityRate = totalFilteredMeetings > 0 ? ((productiveMeetingsCount / totalFilteredMeetings) * 100).toFixed(0) : 0;
-  const avgROI = totalFilteredMeetings > 0 ? (filteredMeetings.reduce((sum, m) => sum + m.roiScore, 0) / totalFilteredMeetings).toFixed(2) : 0;
+  const avgROI = overview.total_meeting_analyzed > 0 
+  ? (overview.total_roi / overview.total_meeting_analyzed).toFixed(2)
+  : 0;
   // Mock monthly savings - in a real app, this would be calculated from improvements
   const monthlySavings = totalCost > 0 ? (totalCost * 0.15) : 0; // Removed .toFixed(2) here
 
@@ -88,7 +108,37 @@ const costOverTimeData = useMemo(() => {
 
   const allDepartments = useMemo(() => ['All', ...new Set(mockMeetings.map(m => m.department))].sort(), []);
   const allMeetingTypes = useMemo(() => ['All', ...new Set(mockMeetings.map(m => m.type))].sort(), []);
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return navigate("/login");
+    if (!user.email_verified) return navigate("/verify-email");
+    if (user.subscription_plan === "free") return navigate("/predict");
 
+    const loadStats = async () => {
+      try {
+        const { overview, userUsage } = await fetchStats(user.user_id);
+        setOverview(overview);
+        setUserD(userUsage);
+        console.log(overview);
+       
+      } catch (err) {
+        // Optional: show toast
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    loadStats();
+  }, [user, loading, navigate]);
+  const stats = {
+    predictionsUsed: userD.predictions_used,
+    monthlyLimit: userD.max_predictions_per_month,
+    costSavings: overview.total_estimated_value_gain,
+  };
+  const prodMeetings = (overview.total_productive_meetings == 0) ? 0 : (overview.total_productive_meetings/overview.total_meeting_analyzed) * 100 
+  if (checking) {
+    return <div>Loading dashboard...</div>;
+  }
   return (
     <>
       <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6">Advanced Meeting Analytics</h2>
@@ -141,6 +191,35 @@ const costOverTimeData = useMemo(() => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+
+            <StatCard
+              icon={<TrendingUp />}
+              title="Predictions Used"
+              value={`${stats.predictionsUsed}/${stats.monthlyLimit}`}
+              colorClass="text-green-500"
+              description={`${((stats.predictionsUsed / stats.monthlyLimit) * 100).toFixed(0)}% of monthly limit`}
+            />
+            <StatCard
+              icon={<DollarSign />}
+              title="Cost Savings"
+              value={`${stats.costSavings.toLocaleString()}`}
+              colorClass="text-green-500"
+              description="Estimated Value gain from meetings based on meeting input data"
+            />
+            <StatCard
+              icon={<BarChart3 />}
+              title="Meetings Analyzed"
+              value={stats.predictionsUsed}
+              colorClass="text-green-500"
+              description="Total Meetings Analyzed this Month"
+            />
+        <StatCard
+          icon={<TrendingUp />}
+          title="ROI"
+          value={`${overview.total_roi.toLocaleString()}`}
+          colorClass="text-blue-500"
+          description="Total return on investment"
+        />
         <StatCard
           icon={<TrendingUp />}
           title="Average ROI"
@@ -151,14 +230,14 @@ const costOverTimeData = useMemo(() => {
         <StatCard
           icon={<DollarSign />}
           title="Total Meeting Cost"
-          value={formatCurrency(totalCost)}
+          value={`${overview.total_estimated_cost.toLocaleString()}`}
           colorClass="text-red-500"
-          description="Based on identified inefficiencies"
+          description="Total Cost of Meetings"
         />
         <StatCard
           icon={<ThumbsUp />}
           title="Productive Meetings %"
-          value={`${productivityRate}%`}
+          value={`${prodMeetings}%`}
           colorClass="text-green-500"
           description="Based on identified inefficiencies"
         />

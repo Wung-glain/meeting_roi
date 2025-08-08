@@ -77,6 +77,7 @@ const VerifyEmail = () => {
         },
       });
       const user = await res.json();
+      
       if (user?.email_verified) {
         navigate("/dashboard");
       } else {

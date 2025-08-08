@@ -180,16 +180,20 @@ JOIN meeting_predictions mp ON mp.meeting_id = mi.id
 WHERE mp.predicted_at >= date_trunc('month', CURRENT_DATE)
 GROUP BY p.name;
 
+DROP VIEW IF EXISTS meeting_overview;
+
 CREATE VIEW meeting_overview AS
 SELECT
     mi.user_id,
     COALESCE(SUM(mp.estimated_cost), 0) AS total_estimated_cost,
     COUNT(mp.id) AS total_meeting_analyzed,
     COALESCE(SUM(mp.roi), 0) AS total_roi,
-    COALESCE(SUM(mp.estimated_value_gain_on_meeting), 0) AS total_estimated_value_gain
+    COALESCE(SUM(mp.estimated_value_gain_on_meeting), 0) AS total_estimated_value_gain,
+    COUNT(*) FILTER (WHERE mp.is_productive = TRUE) AS total_productive_meetings
 FROM meeting_predictions mp
 JOIN meetings mi ON mp.meeting_id = mi.meeting_id
 GROUP BY mi.user_id;
+
 
 
 
@@ -220,3 +224,7 @@ VALUES
   ('pro', 25.00, 100, 'Pro plan for power users'),
   ('business', 59.00, 500, 'Business tier for teams')
 ON CONFLICT (name) DO NOTHING;
+
+ALTER TABLE users
+ADD COLUMN predictions_used INTEGER DEFAULT 0,
+ADD COLUMN plan_updated_at TIMESTAMP DEFAULT NOW();

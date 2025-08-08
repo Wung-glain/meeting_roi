@@ -20,7 +20,8 @@ class User(Base):
     paddle_customer_id = Column(String, unique=True)                 # New field
     paddle_current_subscription_id = Column(String, unique=True)     # New field
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    predictions_used = Column(Integer, default=0, nullable=False)
+    plan_updated_at = Column(DateTime(timezone=True))
     # Relationship to subscriptions (optional, but good for querying)
     plan = relationship("Plan", back_populates="users")               # Relationship
     subscriptions = relationship("Subscription", back_populates="user")
@@ -41,6 +42,7 @@ class Subscription(Base):
     quantity = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
 
     # Relationship to User
     user = relationship("User", back_populates="subscriptions")

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchStats, OverviewData, RecentPrediction, UserUsage } from "../utils/fetchStats";
 import {
   Card,
   CardContent,
@@ -7,110 +8,71 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
-import { BarChart3, TrendingUp, Users, DollarSign, Plus } from "lucide-react";
+import { BarChart3, ThumbsUp, TrendingUp, Users, DollarSign, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import axios from "axios";
-import API_BASE_URL from "@/utils/api";
+
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
   console.log(user)
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
-
-  const [overview, setOverview] = useState({
+  const getFirstName = (fullName = "") => {
+    return fullName.trim().split(" ")[0];
+  };
+  const [overview, setOverview] = useState<OverviewData>({
     total_estimated_cost: 0,
     total_meeting_analyzed: 0,
     total_roi: 0,
     total_estimated_value_gain: 0,
+    total_productive_meetings: 0,
+  });
+  const [userD, setUserD] = useState<UserUsage>({
+    predictions_used: 0,
+    max_predictions_per_month: 0,
   });
 
-  const [recentPredictions, setRecentPredictions] = useState<
-    { id: number; title: string; result: string; confidence: number; date: string }[]
-  >([]);
-
-  const getFirstName = (fullName = "") => {
-    return fullName.trim().split(" ")[0];
-  };
+  const [recentPredictions, setRecentPredictions] = useState<RecentPrediction[]>([]);
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (!user.email_verified) {
-      navigate("/verify-email");
-      return;
-    }
-    if(user.subscription_plan === "free"){
-      navigate("/predict");
-      return;
-    }
-    const fetchStats = async () => {
-      
+    if (!user) return navigate("/login");
+    if (!user.email_verified) return navigate("/verify-email");
+    if (user.subscription_plan === "free") return navigate("/predict");
+
+    const loadStats = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/meeting_statistics/${user.user_id}`);
-
-        const o = res.data.overview;
-        const preds = res.data.recent_predictions;
-        console.log(o);
-        console.log(preds);
-
-        setOverview({
-          total_estimated_cost: o.total_estimated_cost || 0,
-          total_meeting_analyzed: o.total_meeting_analyzed || 0,
-          total_roi: o.total_roi || 0,
-          total_estimated_value_gain: o.total_estimated_value_gain || 0,
-        });
-
-        if (preds.length === 0) {
-          setRecentPredictions([
-            {
-              id: 1,
-              title: "Weekly Sync",
-              result: "Productive",
-              confidence: 85,
-              date: new Date().toISOString().split("T")[0],
-            },
-          ]);
-        } else {
-          const formatted = preds.map((p: any, index: number) => ({
-            id: index + 1,
-            title: p.meeting_title,
-            result: p.is_productive ? "Productive" : "Not Productive",
-            confidence: Number(p.confidence_score),
-            date: p.date,
-          }));
-          setRecentPredictions(formatted);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
+        const { overview, recentPredictions, userUsage } = await fetchStats(user.user_id);
+        setOverview(overview);
+        setUserD(userUsage);
+        console.log(overview);
+        console.log(recentPredictions);
+        console.log(userUsage);
+        setRecentPredictions(recentPredictions);
+      } catch (err) {
+        // Optional: show toast
       } finally {
         setChecking(false);
       }
     };
 
-    fetchStats();
+    loadStats();
   }, [user, loading, navigate]);
 
   if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600 text-lg">
-        Loading dashboard...
-      </div>
-    );
+    return <div>Loading dashboard...</div>;
   }
 
   const stats = {
-    predictionsUsed: overview.total_meeting_analyzed,
-    monthlyLimit: 100,
+    predictionsUsed: userD.predictions_used,
+    monthlyLimit: userD.max_predictions_per_month,
     costSavings: overview.total_estimated_value_gain,
     lastPredictions: recentPredictions,
   };
-
+const prodMeetings = (overview.total_productive_meetings == 0) ? 0 : (overview.total_productive_meetings/overview.total_meeting_analyzed) * 100 
   return (
     <div className="min-h-screen bg-gray-200">
       <div className="container mx-auto px-20 py-4">
@@ -124,80 +86,51 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Predictions Used</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.predictionsUsed}/{stats.monthlyLimit}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {((stats.predictionsUsed / stats.monthlyLimit) * 100).toFixed(0)}% of monthly limit
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cost Savings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${stats.costSavings.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Estimated value gain from meetings
-              </p>
-            </CardContent>
-          </Card>
-
-                    <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Meeting Cost</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${overview.total_estimated_cost.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total Cost of Meetings
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">ROI</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${overview.total_roi.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Total return on investment</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Meetings Analyzed</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.predictionsUsed}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total meetings this month
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <StatCard
+              icon={<TrendingUp />}
+              title="Predictions Used"
+              value={`${stats.predictionsUsed}/${stats.monthlyLimit}`}
+              colorClass="text-green-500"
+              description={`${((stats.predictionsUsed / stats.monthlyLimit) * 100).toFixed(0)}% of monthly limit`}
+            />
+            <StatCard
+              icon={<DollarSign />}
+              title="Cost Savings"
+              value={`${stats.costSavings.toLocaleString()}`}
+              colorClass="text-green-500"
+              description="Estimated Value gain from meetings based on meeting input data"
+            />
+            <StatCard
+              icon={<BarChart3 />}
+              title="Meetings Analyzed"
+              value={stats.predictionsUsed}
+              colorClass="text-green-500"
+              description="Total Meetings Analyzed this Month"
+            />
+        <StatCard
+          icon={<TrendingUp />}
+          title="ROI"
+          value={`${overview.total_roi.toLocaleString()}`}
+          colorClass="text-blue-500"
+          description="Total return on investment"
+        />
+        <StatCard
+          icon={<DollarSign />}
+          title="Total Meeting Cost"
+          value={`${overview.total_estimated_cost.toLocaleString()}`}
+          colorClass="text-red-500"
+          description="Total Cost of Meetings"
+        />
+        <StatCard
+          icon={<ThumbsUp />}
+          title="Productive Meetings %"
+          value={`${prodMeetings}%`}
+          colorClass="text-green-500"
+          description="Based on identified inefficiencies"
+        />
+  </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

@@ -6,8 +6,9 @@ from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 from dotenv import load_dotenv
 from app.db.database import get_db
-from app.db.models import MeetingOverview, RecentPrediction
+from app.db.models import *
 from app.schemas.meeting_schemas import *
+from app.db.models import User, Plan
 
 class MeetingInput(BaseModel):
     time_block: str
@@ -247,7 +248,8 @@ def get_dashboard_data(user_id: str, db: Session = Depends(get_db)):
             total_estimated_cost=0.0,
             total_meeting_analyzed=0,
             total_roi=0.0,
-            total_estimated_value_gain=0.0
+            total_estimated_value_gain=0.0,
+            total_productive_meetings=0
         )
     else:
         overview_data = MeetingOverviewOut.model_validate(overview)
@@ -256,7 +258,23 @@ def get_dashboard_data(user_id: str, db: Session = Depends(get_db)):
     predictions = db.query(RecentPrediction).all()
     predictions_data = [RecentPredictionOut.model_validate(pred) for pred in predictions]
 
+    # Fetch user + plan usage
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.plan_id:
+        plan = db.query(Plan).filter(Plan.id == user.plan_id).first()
+        predictions_used = user.predictions_used
+        max_predictions_permonth = plan.max_predictions_per_month
+    else:
+        predictions_used = 0
+        max_predictions_permonth = 0
+
+    user_usage = UserUsage(
+        predictions_used=predictions_used,
+        max_predictions_per_month=max_predictions_permonth
+    )
+
     return DashboardResponse(
         overview=overview_data,
-        recent_predictions=predictions_data
+        recent_predictions=predictions_data,
+        user_usage=user_usage
     )

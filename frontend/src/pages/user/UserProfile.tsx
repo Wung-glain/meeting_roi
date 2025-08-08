@@ -22,6 +22,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"; // ✅ Using your imported UI buttoimprt 
 import { useAuth } from "@/context/AuthContext";
+import {formatDate } from "@/utils/currencyFormater";
 // Mock User Data (replace with actual data from your AuthContext or API)
 const mockUser = {
   full_name: "John Doe",
@@ -142,7 +143,7 @@ const UserProfile: React.FC = () => {
                 )}
               </p>
               <p className="text-md text-gray-500 flex items-center mt-1">
-                <Calendar size={20} className="mr-2 text-gray-500" /> Member since: {olduser.member_since}
+                <Calendar size={20} className="mr-2 text-gray-500" /> Member since: {user.created_at}
               </p>
             </div>
           </div>
@@ -192,19 +193,19 @@ const UserProfile: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
                 <div>
                   <p className="font-medium">Current Plan:</p>
-                  <p className="text-lg font-semibold text-blue-600">{olduser.subscription_plan}</p>
+                  <p className="text-lg font-semibold text-blue-600">{user.subscription_plan}</p>
                 </div>
                 <div>
                   <p className="font-medium">Plan Expires:</p>
-                  <p>{olduser.plan_expires}</p>
+                  <p>{formatDate(user.plan_expires)}</p>
                 </div>
                 <div>
                   <p className="font-medium">Last Payment:</p>
-                  <p>{olduser.last_payment}</p>
+                  <p>{user.last_payment}</p>
                 </div>
                 <div>
                   <p className="font-medium">Payment Method:</p>
-                  <p>{olduser.payment_method}</p>
+                  <p>{user.payment_method}</p>
                 </div>
               </div>
               <div className="mt-6 flex flex-col sm:flex-row gap-4">

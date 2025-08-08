@@ -56,9 +56,10 @@ const Login = () => {
         const res = await axios.get(`${API_BASE_URL}/auth/get-plan/${user.user_id}`);
         const plan = res.data.plan_name;
         const plan_expiration = res.data.current_period_end;
+       
 
         // Optional: update AuthContext with the plan
-        login({ ...user, subscription_plan: plan, plan_expires: plan_expiration });
+        login({ ...user, subscription_plan: plan, plan_expires: plan_expiration});
       } catch (err) {
         console.error("Error fetching user plan:", err);
       }

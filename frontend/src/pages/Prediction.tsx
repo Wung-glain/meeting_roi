@@ -33,7 +33,7 @@ const Prediction: React.FC = () => {
   // Determine if the user is subscribed. Adjust this logic based on your AuthContext's user object structure.
   // Assuming 'subscription_plan' exists and is not 'Free Tier' or null/undefined for a subscribed user.
   const isSubscribed = user && user.subscription_plan && user.subscription_plan !== "free";
-
+  console.log(isSubscribed);
   const [formData, setFormData] = useState<{
     meeting_title: string; // UI only
     agenda_format: string; // UI only
