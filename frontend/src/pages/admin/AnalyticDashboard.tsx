@@ -237,7 +237,7 @@ const costOverTimeData = useMemo(() => {
         <StatCard
           icon={<ThumbsUp />}
           title="Productive Meetings %"
-          value={`${prodMeetings}%`}
+          value={`${prodMeetings.toFixed(2)}%`}
           colorClass="text-green-500"
           description="Based on identified inefficiencies"
         />

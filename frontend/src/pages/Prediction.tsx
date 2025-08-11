@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 // Define the structure for the prediction result
 interface PredictionResult {
-  result: string;
-  confidence: number;
+  is_productive: boolean;
+  confidence_score: number;
   estimated_cost: number;
   explanation?: string;
   factors?: {
@@ -104,35 +104,92 @@ const apiPayload = {
   has_action_items: formData.has_action_items,              // boolean
   departments: parseInt(formData.departments),        // int
   roles: formData.roles,                          // string (e.g., "Manager,Engineer")
+  meeting_notes: formData.meeting_notes,
+  meeting_title: formData.meeting_title,
   average_annual_salary: parseFloat(formData.average_annual_salary) // float
 };
     console.log(apiPayload);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/predict_one`, apiPayload);
-      setHighlightResult(true);
-      setTimeout(() => {
-      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100); // slight delay ensures DOM update
-     
-      if (!response) {
-        const errorData = await response.data;
-        console.log(errorData);
-        throw new Error(errorData.detail || errorData.message || 'Failed to get prediction from API.');
+    const token = localStorage.getItem("token");
+    console.log("user token is ", token);
+    console.log(user);
+    
+try {
+
+  const refreshToken = localStorage.getItem("refresh_token");
+
+  if (!token) {
+    throw new Error("No token found. Please log in again.");
+  }
+
+  // Function to make the API request with a given token
+  const makeRequest = async (tokenToUse: string) => {
+    return await axios.post(
+      `${API_BASE_URL}/api/predict_one`,
+      apiPayload,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenToUse}`,
+        },
       }
-      console.log("Success")
-      console.log(response.data)
-      const data: PredictionResult = await response.data;
-      setPrediction(data);
-
-    } catch (err: any) {
-
-      console.error("Prediction API Error:", err);
-      setError(err.message || "An unexpected error occurred during prediction.");
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
+  let response;
+
+  try {
+    // Try initial request with current access token
+    response = await makeRequest(token);
+  } catch (err: any) {
+    if (err.response && err.response.status === 401 && refreshToken) {
+      // Access token expired - try refreshing it
+      console.warn("Access token expired, refreshing...");
+      try {
+        const refreshResponse = await axios.post(`${API_BASE_URL}/api/token/refresh`, {},{
+          headers: { Authorization: `Bearer ${refreshToken}` }
+        });
+        console.log("Refresh response:", refreshResponse.data);
+
+        const newAccessToken = refreshResponse.data.access_token;
+
+        // Save new token locally
+        localStorage.setItem("token", newAccessToken);
+
+        // Retry original request with new token
+        response = await makeRequest(newAccessToken);
+      } catch (refreshErr) {
+        // Refresh token failed - force logout
+        throw new Error("Session expired. Please log in again.");
+      }
+    } else {
+      // Other errors just throw
+      throw err;
+    }
+  }
+
+  // Success logic below
+  setHighlightResult(true);
+  setTimeout(() => {
+    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
+
+  if (!response) {
+    const errorData = await response.data;
+    console.log(errorData);
+    throw new Error(errorData.detail || errorData.message || "Failed to get prediction from API.");
+  }
+
+  console.log("Success");
+  console.log(response.data);
+  const data: PredictionResult = await response.data;
+  setPrediction(data);
+} catch (err: any) {
+  console.error("Prediction API Error:", err);
+  setError(err.message || "An unexpected error occurred during prediction.");
+} finally {
+  setLoading(false);
+}
+  };
+ 
   const resetForm = () => {
     setHighlightResult(false);
     setFormData({
@@ -155,7 +212,8 @@ const apiPayload = {
     setPrediction(null);
     setError(null);
   };
-
+  const result = (prediction && prediction.is_productive === true) ? "Productive" : "Not Productive";
+  console.log("Result is ", result);
   return (
     <div className="min-h-screen bg-gray-50 py-8 font-inter">
       <div className="container mx-auto px-4 max-w-8xl">
@@ -485,18 +543,18 @@ const apiPayload = {
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className={`inline-flex items-center px-8 py-4 rounded-full text-2xl font-bold ${
-                      prediction.result === "Productive"
+                      result === "Productive"
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     } shadow-md`}>
-                      {prediction.result === "Productive" ? (
+                      {result === "Productive" ? (
                         <CheckCircle className="h-7 w-7 mr-3" />
                       ) : (
                         <AlertCircle className="h-7 w-7 mr-3" />
                       )}
-                      {prediction.result}
+                      {result}
                     </div>
-                    <p className="text-3xl font-extrabold text-gray-900 mt-6">{prediction.confidence}% Confidence</p>
+                    <p className="text-3xl font-extrabold text-gray-900 mt-6">{prediction.confidence_score}% Confidence</p>
                   </div>
 
                   {prediction.explanation && (
@@ -524,7 +582,7 @@ const apiPayload = {
                       <div className="flex justify-between items-center">
                         <span>Attendee Count:</span>
                         <span className={formData.attendees && parseInt(formData.attendees) <= 7 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                          {formData.attendees && parseInt(formData.attendees) <= 7 ? "Good Size" : prediction.factors.attendee_status}
+                          {formData.attendees && parseInt(formData.attendees) <= 7 ? "Good Size" : "Too many attendees"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchStats, OverviewData, RecentPrediction, UserUsage } from "../utils/fetchStats";
+import {formatDate} from "@/utils/currencyFormater";
 import {
   Card,
   CardContent,
@@ -126,7 +127,7 @@ const prodMeetings = (overview.total_productive_meetings == 0) ? 0 : (overview.t
         <StatCard
           icon={<ThumbsUp />}
           title="Productive Meetings %"
-          value={`${prodMeetings}%`}
+          value={`${prodMeetings.toFixed(2)}%`}
           colorClass="text-green-500"
           description="Based on identified inefficiencies"
         />
@@ -148,7 +149,7 @@ const prodMeetings = (overview.total_productive_meetings == 0) ? 0 : (overview.t
                     >
                       <div className="flex-1">
                         <h4 className="font-medium">{prediction.title}</h4>
-                        <p className="text-sm text-gray-500">{prediction.date}</p>
+                        <p className="text-sm text-gray-500">{formatDate(prediction.date)}</p>
                       </div>
                       <div className="text-right">
                         <div
