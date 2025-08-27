@@ -231,3 +231,11 @@ ADD COLUMN plan_updated_at TIMESTAMP DEFAULT NOW();
 
 ALTER TABLE meeting_predictions
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+UPDATE plans
+SET max_predictions_per_month = CASE
+	WHEN name='free' THEN 3
+	WHEN name='pro' THEN 30
+	WHEN name = 'business' THEN 50
+	ELSE max_predictions_per_month
+END;

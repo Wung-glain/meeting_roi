@@ -85,8 +85,8 @@ def register(user: RegisterUser, db: Session = Depends(get_db)):
     subscription = Subscription(
         user_id=new_user.id,
         plan_id=plan.id,
-        paddle_subscription_id="N/A",
-        paddle_price_id="N/A",
+        paddle_subscription_id=None,
+        paddle_price_id=None,
         status="active",
         current_period_start=datetime.now(timezone.utc),
         current_period_end=None,
@@ -233,15 +233,24 @@ def verify_email(payload: TokenPayload, db: Session = Depends(get_db)):
 #API for passowrd reset email
 @router.post("/request-password-reset")
 async def resend_verification_email(data: ResetPasswordRequest, db: Session = Depends(get_db)):
-    
+    # 1. Find the user by their email address
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        return {"message": "Password reset email sent."}
     token = create_email_token(str(data.email))
+    token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    user.reset_token = token
+    user.reset_token_expiry = token_expiry.replace(tzinfo=None)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     send_reset_pass(data.email, token)
     return {"message": "Password reset email sent."}
 
 @router.post("/reset-password")
 def reset_password(token: str = Body(...), new_password: str = Body(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.reset_token == token).first()
-    if not user or not user.reset_token_expiry or user.reset_token_expiry < datetime.utcnow():
+    if not user or not user.reset_token_expiry:
         raise HTTPException(status_code=400, detail="Invalid or expired token.")
 
     # Here you can add password validation (length, complexity)

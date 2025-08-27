@@ -14,6 +14,8 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     profile_picture = Column(String)
     company_name = Column(String(100))
+    reset_token = Column(String(255))
+    reset_token_expiry = Column(DateTime, default=datetime.utcnow)
     email_verified = Column(Boolean, default=False)
     plan_status = Column(String(50), default='', nullable=False)
     plan_id = Column(Integer, ForeignKey("plans.id"), nullable=True)  # New field
