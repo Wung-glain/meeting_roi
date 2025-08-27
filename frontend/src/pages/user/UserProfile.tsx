@@ -197,7 +197,7 @@ const UserProfile: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium">Plan Expires:</p>
-                  <p>{formatDate(user.plan_expires)}</p>
+                  <p>{user.plan_expires ? formatDate(user.plan_expires) : "N/A"}</p>
                 </div>
                 <div>
                   <p className="font-medium">Last Payment:</p>
